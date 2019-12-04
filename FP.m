@@ -53,27 +53,27 @@ for ll = 1:size(peaks_matched,2)
         F2_Centroids = F2(:,1:2);
         for mm = 1:size(F2_Matches,2)
             if F2_Matches(mm) ~= -1
-                Disp(mm) = (F1_Centroids(1,mm) - F2_Centroids(1,F2_Matches(mm)))^2 + (F1_Centroids(2,mm) - F2_Centroids(2,F2_Matches(mm)))^2;
+                Disp(mm) = ((F1_Centroids(1,mm) - F2_Centroids(1,F2_Matches(mm)))^2 + (F1_Centroids(2,mm) - F2_Centroids(2,F2_Matches(mm)))^2)^0.5;
             else
-                Disp(mm) = (F1_Centroids(1,mm) - F1_Centroids(1,mm))^2 + (F1_Centroids(2,mm) - F1_Centroids(2,mm))^2;
+                Disp(mm) = ((F1_Centroids(1,mm) - F1_Centroids(1,mm))^2 + (F1_Centroids(2,mm) - F1_Centroids(2,mm))^2)^0.5;
             end
         end
-        Mean_Velocity(ll) = mean(nonzeros(Disp))/(28/864);
-    else Mean_Velocity(ll) = 0;
+        Mean_Velocity(ll) = mean(nonzeros(Disp));
+    else
+        Mean_Velocity(ll) = 0;
     end
 end
 Prior = Mean_Velocity(1:215);
 Stimulus = Mean_Velocity(216:536);
 After = Mean_Velocity(537:863);
-plot(1:215,Prior,'-k')
+plot(1:215,Prior,'.-k')
 hold on
-plot(216:536,Stimulus,'-r')
-plot(537:863,After,'-b')
+plot(216:536,Stimulus,'.-r')
+plot(537:863,After,'.-b')
 hold off
 set(gca,'YScale','log')
 xlabel('Time/(1/30s)')
 ylabel('Mean Velocity/(Pixel/Frame)')
-ylim([0 3e+06])
 legend('Before Stimulus','Stimulus','After Stimulus')
 
 [h1,p1] = ttest2(Prior,Stimulus);
@@ -89,20 +89,27 @@ for nn = 1:size(TotMasks,3)
     Centres{nn} = xy;
 end
 
-Centroids = false(480,640,864);
+Centroids = zeros(480,640,3,864);
+colors = rand(25,3);
 se = strel('disk',5);
-for oo = 1:size(Centres,2)
-    xy_F = Centres{1,oo};
-    for pp = 1:size(xy_F)
-        Centroids(xy_F(pp,2),xy_F(pp,1),oo) = true;
+for oo = 1:size(peaks_matched,2)
+    Frame = peaks_matched{1,ll}{1,1};
+    F1_Centroids = F1(:,1:2);
+    F2_Matches = F1(:,4);
+    for pp = 1:size(F2_Matches,2)
+        Centroids(round(pp,2),round(pp,1),1,oo) = colors(F2_Matches(pp),1);
+        Centroids(round(pp,2),round(pp,1),2,oo) = colors(F2_Matches(pp),2);
+        Centroids(round(pp,2),round(pp,1),3,oo) = colors(F2_Matches(pp),3);
     end
-    Centroids(:,:,oo) = imdilate(Centroids(:,:,oo),se);
 end
-Centroids = reshape(Centroids,480,640,1,864);
-Centroids = uint8(Centroids*255);
-cat_Centroids = cat(3,Centroids,zeros(480,640,2,864));
-Worms_Centres = TotFrames + cat_Centroids;
+Centroids_F = uint8(Centroids*255);
 
+for qq = 1:size(Centroids,4)
+    for rr = 1:size(Centroids,3)
+        Centriods_D(:,:,rr,qq) = imdilate(Centroids(:,:,rr,qq),se);
+    end
+end
+Worms_Centres = TotFrames + Centroids_D;
 video = VideoWriter('WormLocators.avi');
 video.FrameRate = 30;
 open(video)
