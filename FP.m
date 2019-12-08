@@ -77,9 +77,7 @@ ylabel('Mean Velocity/(Pixel/Frame)')
 legend('Before Stimulus','Stimulus','After Stimulus')
 
 [h1,p1] = ttest2(Prior,Stimulus);
-% h1 = 0; p1 = 0.7702;
 [h2,p2] = ttest2(Stimulus,After);
-% h2 = 0; p2 = 0.6592;
 [h3,p3] = ttest2(Prior,After);
 % h3 = 0; p3 = 0.9194;
 
